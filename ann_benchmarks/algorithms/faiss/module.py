@@ -6,6 +6,24 @@ import numpy
 import sklearn.preprocessing
 
 from ..base.module import BaseANN
+from sklearn.decomposition import PCA
+
+
+def pca_preprocess(data, n_components=2):
+    """
+    Perform PCA preprocessing on the data.
+    
+    Args:
+        data (np.ndarray): The dataset.
+        n_components (int): The number of principal components to keep.
+    
+    Returns:
+        reduced_data (np.ndarray): The reduced dataset.
+    """
+    pca = PCA(n_components=n_components)
+    reduced_data = pca.fit_transform(data)
+    return reduced_data
+
 
 
 class Faiss(BaseANN):
@@ -115,3 +133,50 @@ class FaissIVFPQfs(Faiss):
 
     def __str__(self):
         return "FaissIVFPQfs(n_list=%d, n_probe=%d, k_reorder=%d)" % (self._n_list, self._n_probe, self._k_reorder)
+
+
+class FaissIVFPCA(Faiss):
+    def __init__(self, metric, n_list):
+        self._n_list = n_list
+        self._metric = metric
+
+    def fit(self, X):
+        self.pca = PCA(n_components=16)
+        X = self.pca.fit_transform(X)
+
+        if self._metric == "angular":
+            X = sklearn.preprocessing.normalize(X, axis=1, norm="l2")
+
+        if X.dtype != numpy.float32:
+            X = X.astype(numpy.float32)
+        # X = numpy.ascontiguousarray(X)
+
+        self.quantizer = faiss.IndexFlatL2(X.shape[1])
+        index = faiss.IndexIVFFlat(self.quantizer, X.shape[1], self._n_list, faiss.METRIC_L2)
+        index.train(X)
+        index.add(X)
+        self.index = index
+
+    def set_query_arguments(self, n_probe):
+        faiss.cvar.indexIVF_stats.reset()
+        self._n_probe = n_probe
+        self.index.nprobe = self._n_probe
+
+    def batch_query(self, X, n):
+        X = self.pca.transform(X)
+        if self._metric == "angular":
+            X = sklearn.preprocessing.normalize(X, axis=1, norm="l2")
+        if X.dtype != numpy.float32:
+            X = X.astype(numpy.float32)
+        # X = numpy.ascontiguousarray(X)
+        self.res = self.index.search(X, n)
+
+
+    
+    def get_additional(self):
+        return {"dist_comps": faiss.cvar.indexIVF_stats.ndis + faiss.cvar.indexIVF_stats.nq * self._n_list}  # noqa
+
+    def __str__(self):
+        return "FaissIVFPCA(n_list=%d, n_probe=%d)" % (self._n_list, self._n_probe)
+    
+    

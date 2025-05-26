@@ -1,11 +1,11 @@
 float:
   any:
   - base_args: ['@metric']
-    constructor: FaissHNSW
+    constructor: CagraHNSW
     disabled: false
-    docker_tag: ann-benchmarks-faiss_hnsw
-    module: ann_benchmarks.algorithms.faiss_hnsw
-    name: faiss-hnsw
+    docker_tag: ann-benchmarks-cagra
+    module: ann_benchmarks.algorithms.cagra
+    name: cagra_hnsw
     run_groups:
       M-12:
         arg_groups: [{M: 12, efConstruction: 500}]
@@ -45,11 +45,11 @@ float:
         query_args: [[10, 20, 40, 80, 120, 200, 400, 600, 800]]
   
   - base_args: ['@metric']
-    constructor: FaissHNSWPCA
+    constructor: Cagra
     disabled: false
-    docker_tag: ann-benchmarks-faiss_hnsw
-    module: ann_benchmarks.algorithms.faiss_hnsw
-    name: faiss-hnsw-pca
+    docker_tag: ann-benchmarks-cagra
+    module: ann_benchmarks.algorithms.cagra
+    name: cagra
     run_groups:
       M-12:
         arg_groups: [{M: 12, efConstruction: 500}]

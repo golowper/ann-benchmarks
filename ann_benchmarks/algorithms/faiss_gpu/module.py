@@ -30,7 +30,9 @@ class FaissGPU(BaseANN):
         #                                      self._index, co)
         self._index.train(X)
         self._index.add(X)
-        self._index.setNumProbes(self._n_probes)
+        # self._index.setNumProbes(self._n_probes)
+        self._index.nprobe = self._n_probes
+
 
     def query(self, v, n):
         return [label for label, _ in self.query_with_distances(v, n)]
